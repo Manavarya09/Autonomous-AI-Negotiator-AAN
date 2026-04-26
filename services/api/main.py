@@ -3,6 +3,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import PlainTextResponse
 from typing import Dict, List
 import json
 import asyncio
@@ -11,11 +12,26 @@ from config.core.settings import get_settings
 from config.database import init_db
 from services.api.routes import jobs, listings
 from services.api.routes.dashboard import router as dashboard_router
+from services.api.routes.auth import router as auth_router
 
 
 settings = get_settings()
 
 active_connections: Dict[str, List[WebSocket]] = {}
+
+from prometheus_client import Counter, Histogram, generate_latest
+
+http_requests_total = Counter(
+    'http_requests_total',
+    'Total HTTP requests',
+    ['method', 'endpoint', 'status']
+)
+
+http_request_duration_seconds = Histogram(
+    'http_request_duration_seconds',
+    'HTTP request latency',
+    ['method', 'endpoint']
+)
 
 
 async def notify_job_update(job_id: str, event: dict):
@@ -51,6 +67,7 @@ app.add_middleware(
 app.include_router(jobs.router)
 app.include_router(listings.router)
 app.include_router(dashboard_router)
+app.include_router(auth_router)
 
 
 @app.websocket("/ws/jobs/{job_id}")
@@ -91,3 +108,8 @@ async def health_check():
 @app.get("/")
 async def root():
     return {"message": "Autonomous AI Negotiator API", "version": "1.0.0"}
+
+
+@app.get("/metrics")
+async def metrics():
+    return PlainTextResponse(generate_latest())

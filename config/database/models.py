@@ -23,11 +23,29 @@ class Base(DeclarativeBase):
     pass
 
 
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
+    username: Mapped[str] = mapped_column(String(100), nullable=False)
+    hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[Optional[str]] = mapped_column(String(200))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    is_superuser: Mapped[bool] = mapped_column(Boolean, default=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    jobs: Mapped[list["NegotiationJob"]] = relationship(back_populates="user", cascade="all, delete-orphan")
+
+    __table_args__ = (Index("ix_users_email", "email"),)
+
+
 class NegotiationJob(Base):
     __tablename__ = "negotiation_jobs"
 
     id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), nullable=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     product_query: Mapped[str] = mapped_column(String(500), nullable=False)
     target_price: Mapped[float] = mapped_column(Float, nullable=False)
     max_price: Mapped[float] = mapped_column(Float, nullable=False)
@@ -44,6 +62,8 @@ class NegotiationJob(Base):
     raw_listings: Mapped[list["RawListing"]] = relationship(back_populates="job", cascade="all, delete-orphan")
     normalized_listings: Mapped[list["NormalizedListing"]] = relationship(back_populates="job", cascade="all, delete-orphan")
     negotiations: Mapped[list["Negotiation"]] = relationship(back_populates="job", cascade="all, delete-orphan")
+
+    user: Mapped["User"] = relationship(back_populates="jobs")
 
 
 class RawListing(Base):

@@ -3,17 +3,18 @@
 from typing import Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config.database import get_db
-from config.database.models import NegotiationJob
+from config.database.models import NegotiationJob, User
 from config.database.schemas import (
     NegotiationJobCreate,
     NegotiationJobResponse,
     NegotiationJobStatusResponse,
 )
+from services.api.routes.auth import get_current_user
 
 router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 
@@ -21,9 +22,12 @@ router = APIRouter(prefix="/api/v1/jobs", tags=["jobs"])
 @router.post("", response_model=NegotiationJobResponse, status_code=201)
 async def create_job(
     job_data: NegotiationJobCreate,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Create a new negotiation job (requires authentication)."""
     job = NegotiationJob(
+        user_id=current_user.id,
         product_query=job_data.product_query,
         target_price=job_data.target_price,
         max_price=job_data.max_price,
@@ -40,12 +44,37 @@ async def create_job(
     return job
 
 
+@router.get("", response_model=list[NegotiationJobResponse])
+async def list_jobs(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+    limit: int = Query(50, le=100),
+    offset: int = Query(0, ge=0),
+):
+    """List all jobs for the current user."""
+    result = await db.execute(
+        select(NegotiationJob)
+        .where(NegotiationJob.user_id == current_user.id)
+        .order_by(NegotiationJob.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    return result.scalars().all()
+
+
 @router.get("/{job_id}", response_model=NegotiationJobResponse)
 async def get_job(
     job_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(NegotiationJob).where(NegotiationJob.id == job_id))
+    """Get a specific job by ID."""
+    result = await db.execute(
+        select(NegotiationJob).where(
+            NegotiationJob.id == job_id,
+            NegotiationJob.user_id == current_user.id
+        )
+    )
     job = result.scalar_one_or_none()
 
     if not job:
@@ -57,9 +86,16 @@ async def get_job(
 @router.get("/{job_id}/status", response_model=NegotiationJobStatusResponse)
 async def get_job_status(
     job_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(NegotiationJob).where(NegotiationJob.id == job_id))
+    """Get job status and statistics."""
+    result = await db.execute(
+        select(NegotiationJob).where(
+            NegotiationJob.id == job_id,
+            NegotiationJob.user_id == current_user.id
+        )
+    )
     job = result.scalar_one_or_none()
 
     if not job:
@@ -96,9 +132,16 @@ async def get_job_status(
 @router.delete("/{job_id}")
 async def cancel_job(
     job_id: UUID,
+    current_user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    result = await db.execute(select(NegotiationJob).where(NegotiationJob.id == job_id))
+    """Cancel a job."""
+    result = await db.execute(
+        select(NegotiationJob).where(
+            NegotiationJob.id == job_id,
+            NegotiationJob.user_id == current_user.id
+        )
+    )
     job = result.scalar_one_or_none()
 
     if not job:
