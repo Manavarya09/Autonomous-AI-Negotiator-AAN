@@ -1,0 +1,1 @@
+"""Scraper tasks for Celery."""

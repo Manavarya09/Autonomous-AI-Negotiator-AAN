@@ -1,0 +1,127 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ./services/api
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "5555:5555"
+    depends_on:
+      - postgres
+      - redis
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
+      - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    env_file:
+      - .env
+    networks:
+      - aan-network
+
+  worker-scraper:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    command: celery -A app.celery worker -Q scraping -c 4
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    networks:
+      - aan-network
+
+  worker-negotiation:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    command: celery -A app.celery worker -Q negotiation -c 20
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    networks:
+      - aan-network
+
+  worker-comms:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    command: celery -A app.celery worker -Q communications -c 8
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
+      - REDIS_URL=redis://redis:6379/0
+    env_file:
+      - .env
+    networks:
+      - aan-network
+
+  scheduler:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    command: celery -A app.celery beat --loglevel=info
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - aan-network
+
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=aan
+      - POSTGRES_PASSWORD=aanpass
+      - POSTGRES_DB=aan_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - aan-network
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redisdata:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - aan-network
+
+  flower:
+    build:
+      context: ./services/worker
+      dockerfile: Dockerfile
+    command: celery -A app.celery flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_URL=redis://redis:6379/0
+    networks:
+      - aan-network
+
+networks:
+  aan-network:
+    driver: bridge
+
+volumes:
+  pgdata:
+  redisdata:
