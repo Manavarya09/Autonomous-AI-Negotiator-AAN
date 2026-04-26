@@ -1,0 +1,32 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY pyproject.toml .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir \
+        celery[redis] \
+        redis \
+        sqlalchemy[asyncio] \
+        asyncpg \
+        pydantic \
+        pydantic-settings \
+        playwright \
+        beautifulsoup4 \
+        lxml \
+        httpx \
+        aiohttp \
+        litellm \
+        python-dotenv
+
+COPY config/ ./config/
+COPY services/worker/ ./services/worker/
+
+ENV PYTHONPATH=/app
+
+CMD ["celery", "-A", "services.worker.app.celery", "worker", "--loglevel=info"]

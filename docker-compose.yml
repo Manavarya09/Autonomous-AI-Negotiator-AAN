@@ -3,29 +3,27 @@ version: '3.8'
 services:
   api:
     build:
-      context: ./services/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: Dockerfile.api
     ports:
       - "8000:8000"
-      - "5555:5555"
     depends_on:
       - postgres
       - redis
     environment:
       - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
       - REDIS_URL=redis://redis:6379/0
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
     env_file:
-      - .env
+      - .env.example
     networks:
       - aan-network
+    restart: unless-stopped
 
-  worker-scraper:
+  worker:
     build:
-      context: ./services/worker
-      dockerfile: Dockerfile
-    command: celery -A app.celery worker -Q scraping -c 4
+      context: .
+      dockerfile: Dockerfile.worker
+    command: celery -A services.worker.app.celery worker --loglevel=info
     depends_on:
       - redis
       - postgres
@@ -33,53 +31,12 @@ services:
       - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
       - REDIS_URL=redis://redis:6379/0
     env_file:
-      - .env
+      - .env.example
     networks:
       - aan-network
-
-  worker-negotiation:
-    build:
-      context: ./services/worker
-      dockerfile: Dockerfile
-    command: celery -A app.celery worker -Q negotiation -c 20
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
-    networks:
-      - aan-network
-
-  worker-comms:
-    build:
-      context: ./services/worker
-      dockerfile: Dockerfile
-    command: celery -A app.celery worker -Q communications -c 8
-    depends_on:
-      - redis
-      - postgres
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://aan:aanpass@postgres:5432/aan_db
-      - REDIS_URL=redis://redis:6379/0
-    env_file:
-      - .env
-    networks:
-      - aan-network
-
-  scheduler:
-    build:
-      context: ./services/worker
-      dockerfile: Dockerfile
-    command: celery -A app.celery beat --loglevel=info
-    depends_on:
-      - redis
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-    networks:
-      - aan-network
+    restart: unless-stopped
+    deploy:
+      replicas: 2
 
   postgres:
     image: postgres:15-alpine
@@ -93,30 +50,28 @@ services:
       - "5432:5432"
     networks:
       - aan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aan"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
     image: redis:7-alpine
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
     volumes:
       - redisdata:/data
     ports:
       - "6379:6379"
     networks:
       - aan-network
-
-  flower:
-    build:
-      context: ./services/worker
-      dockerfile: Dockerfile
-    command: celery -A app.celery flower --port=5555
-    ports:
-      - "5555:5555"
-    depends_on:
-      - redis
-    environment:
-      - REDIS_URL=redis://redis:6379/0
-    networks:
-      - aan-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
 networks:
   aan-network:
