@@ -10,11 +10,9 @@
         <ul class="nav-links">
           <li><a href="#features">Features</a></li>
           <li><a href="#how-it-works">How It Works</a></li>
-          <li><a href="#pricing">Pricing</a></li>
         </ul>
         <div class="nav-actions">
-          <a href="/dashboard" class="btn btn-outline">Dashboard</a>
-          <a href="#pricing" class="btn btn-primary">Get Started</a>
+          <a href="/dashboard" class="btn btn-primary">Get Started</a>
         </div>
       </div>
     </nav>
@@ -33,20 +31,6 @@
         </p>
         <div class="hero-actions">
           <a href="/dashboard" class="btn btn-primary">Start Negotiating</a>
-        </div>
-        <div class="hero-stats">
-          <div class="stat-item">
-            <div class="stat-value">18%</div>
-            <div class="stat-label">Avg Savings</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">2,400+</div>
-            <div class="stat-label">Deals Closed</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">850</div>
-            <div class="stat-label">Active Users</div>
-          </div>
         </div>
       </div>
     </section>
@@ -142,58 +126,6 @@
           <div class="use-case">
             <h3 class="use-case-title">Car Buyers</h3>
             <p class="use-case-text">Navigate used car listings. Negotiate price based on market data and vehicle condition.</p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Stats -->
-    <section class="section">
-      <div class="section-inner">
-        <div class="section-header">
-          <div class="section-label">Performance</div>
-          <h2 class="section-title">Real numbers</h2>
-        </div>
-        <div class="stats-grid">
-          <div class="stats-card">
-            <div class="stats-value">42%</div>
-            <div class="stats-label">Success Rate</div>
-          </div>
-          <div class="stats-card">
-            <div class="stats-value">18hrs</div>
-            <div class="stats-label">Avg Close Time</div>
-          </div>
-          <div class="stats-card">
-            <div class="stats-value">5</div>
-            <div class="stats-label">Platforms</div>
-          </div>
-          <div class="stats-card">
-            <div class="stats-value">10+</div>
-            <div class="stats-label">Parallel Threads</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Pricing -->
-    <section id="pricing" class="section">
-      <div class="section-inner">
-        <div class="section-header">
-          <div class="section-label">Pricing</div>
-          <h2 class="section-title">Simple plans</h2>
-        </div>
-        <div class="pricing-grid">
-          <div class="pricing-card">
-            <div class="pricing-name">Starter</div>
-            <div class="pricing-price">$0<span>/mo</span></div>
-          </div>
-          <div class="pricing-card featured">
-            <div class="pricing-name">Pro</div>
-            <div class="pricing-price">$29<span>/mo</span></div>
-          </div>
-          <div class="pricing-card">
-            <div class="pricing-name">Business</div>
-            <div class="pricing-price">$99<span>/mo</span></div>
           </div>
         </div>
       </div>
