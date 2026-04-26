@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from config.core.settings import get_settings
+from config.database import init_db
+from config.database.connection import get_db
+from services.api.routes import jobs, listings
 
 
 settings = get_settings()
@@ -12,6 +15,7 @@ settings = get_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_db()
     yield
 
 
@@ -28,6 +32,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+app.include_router(jobs.router)
+app.include_router(listings.router)
 
 
 @app.get("/health")
