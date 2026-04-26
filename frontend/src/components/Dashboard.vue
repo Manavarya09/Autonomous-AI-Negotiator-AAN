@@ -420,14 +420,16 @@ onMounted(async () => {
 }
 
 .job-details {
-  display: flex gap: 1rem;
+  display: flex;
+  gap: 1rem;
   color: #666;
   font-size: 0.875rem;
   margin-bottom: 0.75rem;
 }
 
 .job-actions {
-  display: flex gap: 0.5rem;
+  display: flex;
+  gap: 0.5rem;
 }
 
 .btn-small {
