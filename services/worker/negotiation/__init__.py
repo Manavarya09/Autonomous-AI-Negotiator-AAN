@@ -1,0 +1,1 @@
+"""Negotiation package for agent-based price negotiation."""
