@@ -1,0 +1,1 @@
+"""Negotiation tasks for Celery."""
