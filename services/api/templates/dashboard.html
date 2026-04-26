@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AAN - Listings Dashboard</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f5f7fa; }
+        .header { background: #1a1a2e; color: white; padding: 1rem 2rem; }
+        .header h1 { font-size: 1.5rem; }
+        .header .subtitle { opacity: 0.7; font-size: 0.875rem; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat-card { background: white; padding: 1.5rem; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .stat-card .label { color: #666; font-size: 0.875rem; margin-bottom: 0.5rem; }
+        .stat-card .value { font-size: 2rem; font-weight: 600; color: #1a1a2e; }
+        .filters { background: white; padding: 1.5rem; border-radius: 8px; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .filters form { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; }
+        .form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+        .form-group label { font-size: 0.875rem; color: #666; }
+        .form-group input, .form-group select { padding: 0.75rem; border: 1px solid #ddd; border-radius: 6px; font-size: 1rem; }
+        .btn { padding: 0.75rem 1.5rem; background: #4f46e5; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1rem; }
+        .btn:hover { background: #4338ca; }
+        .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; }
+        .listing-card { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.2s; }
+        .listing-card:hover { transform: translateY(-4px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .listing-image { height: 200px; background: #e5e7eb; display: flex; align-items: center; justify-content: center; color: #9ca3af; }
+        .listing-image img { width: 100%; height: 100%; object-fit: cover; }
+        .listing-content { padding: 1.5rem; }
+        .listing-title { font-size: 1.125rem; font-weight: 600; margin-bottom: 0.5rem; color: #1a1a2e; }
+        .listing-price { font-size: 1.5rem; font-weight: 700; color: #059669; margin-bottom: 0.5rem; }
+        .listing-meta { display: flex; gap: 1rem; font-size: 0.875rem; color: #666; flex-wrap: wrap; }
+        .listing-meta span { display: flex; align-items: center; gap: 0.25rem; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 9999px; font-size: 0.75rem; font-weight: 500; }
+        .badge-platform { background: #dbeafe; color: #1e40af; }
+        .badge-condition { background: #d1fae5; color: #065f46; }
+        .score-bar { height: 6px; background: #e5e7eb; border-radius: 3px; margin-top: 1rem; overflow: hidden; }
+        .score-fill { height: 100%; background: linear-gradient(90deg, #4f46e5, #7c3aed); border-radius: 3px; }
+        .score-label { font-size: 0.75rem; color: #666; margin-top: 0.5rem; }
+        .empty { text-align: center; padding: 4rem; color: #666; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>AAN - Autonomous AI Negotiator</h1>
+        <div class="subtitle">Deal Discovery Dashboard</div>
+    </div>
+    
+    <div class="container">
+        <div class="stats">
+            <div class="stat-card">
+                <div class="label">Total Listings</div>
+                <div class="value" id="totalListings">{{ total_listings }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Platforms</div>
+                <div class="value" id="platforms">{{ platforms }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Avg Score</div>
+                <div class="value" id="avgScore">{{ avg_score }}</div>
+            </div>
+            <div class="stat-card">
+                <div class="label">Active Jobs</div>
+                <div class="value" id="activeJobs">{{ active_jobs }}</div>
+            </div>
+        </div>
+        
+        <div class="filters">
+            <form method="get" action="/dashboard">
+                <div class="form-group">
+                    <label>Search</label>
+                    <input type="text" name="product" placeholder="Nikon D750, MacBook..." value="{{ product_filter }}">
+                </div>
+                <div class="form-group">
+                    <label>Platform</label>
+                    <select name="platform">
+                        <option value="">All Platforms</option>
+                        <option value="dubizzle">Dubizzle</option>
+                        <option value="olx">OLX</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Max Price (AED)</label>
+                    <input type="number" name="max_price" placeholder="5000" value="{{ max_price_filter }}">
+                </div>
+                <div class="form-group">
+                    <label>Sort By</label>
+                    <select name="sort">
+                        <option value="score">Best Score</option>
+                        <option value="price">Lowest Price</option>
+                        <option value="date">Newest</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn">Filter</button>
+            </form>
+        </div>
+        
+        {% if listings %}
+        <div class="listings-grid">
+            {% for listing in listings %}
+            <div class="listing-card">
+                <div class="listing-image">
+                    {% if listing.image_urls and listing.image_urls[0] %}
+                    <img src="{{ listing.image_urls[0] }}" alt="{{ listing.product_name }}">
+                    {% else %}
+                    <span>No Image</span>
+                    {% endif %}
+                </div>
+                <div class="listing-content">
+                    <div class="listing-title">{{ listing.product_name }}</div>
+                    <div class="listing-price">AED {{ listing.price }}</div>
+                    <div class="listing-meta">
+                        <span class="badge badge-platform">{{ listing.platform }}</span>
+                        <span class="badge badge-condition">{{ listing.condition or 'used' }}</span>
+                        <span>{{ listing.seller_name or 'Unknown seller' }}</span>
+                    </div>
+                    <div class="listing-meta" style="margin-top: 0.5rem;">
+                        <span>{{ listing.location_city or 'Dubai' }}</span>
+                        {% if listing.is_negotiable %}
+                        <span style="color: #059669;">Negotiable</span>
+                        {% endif %}
+                    </div>
+                    <div class="score-bar">
+                        <div class="score-fill" style="width: {{ listing.listing_score * 100 }}%"></div>
+                    </div>
+                    <div class="score-label">Score: {{ "%.1f"|format(listing.listing_score * 100) }}%</div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty">
+            <h2>No listings found</h2>
+            <p>Try adjusting your filters or create a new job to discover listings.</p>
+            <a href="/jobs/new" class="btn" style="display: inline-block; margin-top: 1rem;">Create New Job</a>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>

@@ -8,6 +8,7 @@ from config.core.settings import get_settings
 from config.database import init_db
 from config.database.connection import get_db
 from services.api.routes import jobs, listings
+from services.api.routes.dashboard import router as dashboard_router
 
 
 settings = get_settings()
@@ -35,6 +36,7 @@ app.add_middleware(
 
 app.include_router(jobs.router)
 app.include_router(listings.router)
+app.include_router(dashboard_router)
 
 
 @app.get("/health")
