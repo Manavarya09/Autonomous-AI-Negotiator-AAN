@@ -9,6 +9,15 @@ class ScraperConfig:
     platform: str
     base_url: str
     search_url_template: str
+    search_url: str = ""
+    search_params: dict = field(default_factory=dict)
+    listing_selector: str = ""
+    title_selector: str = ""
+    price_selector: str = ""
+    seller_selector: str = ""
+    image_selector: str = ""
+    location_selector: str = ""
+    condition_selector: str = ""
     listing_selectors: list[str] = field(default_factory=list)
     price_selectors: list[str] = field(default_factory=list)
     title_selectors: list[str] = field(default_factory=list)
@@ -17,6 +26,7 @@ class ScraperConfig:
     location_selectors: list[str] = field(default_factory=list)
     condition_selectors: list[str] = field(default_factory=list)
     max_pages: int = 3
+    page_size: int = 24
     timeout_ms: int = 15000
     use_proxy: bool = False
     headless: bool = True
@@ -143,9 +153,28 @@ AMAZON_CONFIG = ScraperConfig(
     use_proxy=False,
 )
 
+FACEBOOK_CONFIG = ScraperConfig(
+    platform="facebook",
+    base_url="https://www.facebook.com",
+    search_url="https://www.facebook.com/marketplace/",
+    search_url_template="https://www.facebook.com/marketplace/?",
+    listing_selector=".x1n2kcrq",
+    title_selector=".x1lliihq",
+    price_selector=".x1ux0k5l",
+    seller_selector=".x78jz5m",
+    image_selector="img.x1n2ekr",
+    location_selector=".x1e56ztr",
+    max_pages=3,
+    timeout_ms=20000,
+    use_proxy=True,
+    headless=True,
+    requires_auth=True,
+)
+
 PLATFORM_CONFIGS = {
     "dubizzle": DUBIZZLE_CONFIG,
     "olx": OLX_CONFIG,
     "noon": NOON_CONFIG,
     "amazon_ae": AMAZON_CONFIG,
+    "facebook": FACEBOOK_CONFIG,
 }
