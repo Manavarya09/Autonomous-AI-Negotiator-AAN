@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, v2-*]
   pull_request:
     branches: [main]
 
@@ -25,3 +25,29 @@ jobs:
     - name: Build frontend
       working-directory: ./frontend
       run: npm run build
+
+  python-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+    
+    - name: Install dependencies
+      run: uv pip install --system -e ".[dev]"
+    
+    - name: Run linter
+      run: uv run ruff check config/ services/
+    
+    - name: Type check
+      run: uv run mypy config/ services/
+    
+    - name: Run tests
+      run: uv run pytest tests/ -v --ignore=tests/integration
