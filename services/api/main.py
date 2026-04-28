@@ -13,6 +13,10 @@ from config.database import init_db
 from services.api.routes import jobs, listings
 from services.api.routes.dashboard import router as dashboard_router
 from services.api.routes.auth import router as auth_router
+from services.api.routes.notifications import router as notifications_router
+from services.api.routes.payments import router as payments_router
+from services.api.routes.developer import router as developer_router
+from services.api.routes.analytics import router as analytics_router
 
 
 settings = get_settings()
@@ -68,6 +72,10 @@ app.include_router(jobs.router)
 app.include_router(listings.router)
 app.include_router(dashboard_router)
 app.include_router(auth_router)
+app.include_router(notifications_router)
+app.include_router(payments_router)
+app.include_router(developer_router)
+app.include_router(analytics_router)
 
 
 @app.websocket("/ws/jobs/{job_id}")
